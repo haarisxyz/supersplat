@@ -2,7 +2,7 @@ import { XrMode } from './xr-mode';
 import { XrSettings } from './xr-settings';
 import { Events } from '../events';
 import { Scene } from '../scene';
-import { localize } from '../ui/localization';
+import { i18n } from '../ui/localization';
 
 const registerXrEvents = (scene: Scene, events: Events) => {
     const xrMode = new XrMode(scene, events);
@@ -22,11 +22,11 @@ const registerXrEvents = (scene: Scene, events: Events) => {
     events.on('xr.error', (message: string) => {
         events.invoke('showPopup', {
             type: 'error',
-            header: localize('popup.vr.error'),
+            header: i18n.t('popup.vr.error'),
             message: {
-                'no-device': localize('popup.vr.no-device'),
-                'busy': localize('popup.vr.busy')
-            }[message] ?? `${localize('popup.vr.failed')} ${message ?? ''}`.trim()
+                'no-device': i18n.t('popup.vr.no-device'),
+                'busy': i18n.t('popup.vr.busy')
+            }[message] ?? `${i18n.t('popup.vr.failed')} ${message ?? ''}`.trim()
         });
     });
 

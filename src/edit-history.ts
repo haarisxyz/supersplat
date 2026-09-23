@@ -1,3 +1,4 @@
+import { CommandQueue } from './command-queue';
 import { EditOp, MultiOp } from './edit-ops';
 import { Events } from './events';
 import { Splat } from './splat';
@@ -17,29 +18,23 @@ class EditHistory {
     cursor = 0;
     events: Events;
 
-    // serialize all history-modifying operations so an in-flight op (including its async GPU
-    // readback in updatePositions) completes before the next add/undo/redo begins. without this,
-    // rapid Ctrl+Z / Ctrl+Shift+Z events race with pending updatePositions calls and corrupt the
-    // sorter's centers buffer in centers-overlay mode.
-    private chain: Promise<void> = Promise.resolve();
+    // shared queue used to serialize every history mutation. the same physical
+    // CommandQueue is shared with DataProcessor callers via scene.commandQueue
+    // and the 'queue' event, so all async splat work applies in initiation order.
+    private commandQueue: CommandQueue;
 
-    constructor(events: Events) {
+    constructor(events: Events, commandQueue: CommandQueue) {
         this.events = events;
+        this.commandQueue = commandQueue;
 
         events.on('edit.undo', () => this.undo());
         events.on('edit.redo', () => this.redo());
         events.on('edit.add', (editOp: EditOp, suppressOp = false) => this.add(editOp, suppressOp));
+        events.on('edit.removeForShape', (shape: unknown) => this.removeForShape(shape));
     }
 
-    // enqueue arbitrary async work onto the serialized history chain. exposed so external
-    // callers (e.g. transform handlers) can serialize their own GPU readbacks alongside
-    // history mutations and avoid the same race conditions.
-    queue(fn: () => Promise<void>) {
-        const next = this.chain.then(fn);
-        this.chain = next.catch((err) => {
-            console.error('EditHistory queued operation failed', err);
-        });
-        return next;
+    private queue<T>(fn: () => T | Promise<T>): Promise<T> {
+        return this.commandQueue.enqueue(fn);
     }
 
     add(editOp: EditOp, suppressOp = false) {
@@ -115,13 +110,39 @@ class EditHistory {
             this.history = [];
             this.cursor = 0;
             this.fireEvents();
-            return Promise.resolve();
+        });
+    }
+
+    // Remove all operations that reference a specific selection shape. Called
+    // when a shape tool deactivates: the volume is transient tool state, so
+    // its ops must not linger in history as steps that visibly change nothing.
+    // Shape ops are never nested inside MultiOp, so a flat scan suffices.
+    removeForShape(shape: unknown) {
+        return this.queue(() => {
+            let newCursor = 0;
+            const newHistory: EditOp[] = [];
+
+            for (let i = 0; i < this.history.length; i++) {
+                const op = this.history[i];
+                if ((op as any).shape === shape) {
+                    op.destroy?.();
+                } else {
+                    newHistory.push(op);
+                    if (i < this.cursor) {
+                        newCursor++;
+                    }
+                }
+            }
+
+            this.history = newHistory;
+            this.cursor = newCursor;
+            this.fireEvents();
         });
     }
 
     // Remove all operations that reference a specific splat
     removeForSplat(splat: Splat) {
-        // serialize with the chain so we don't reshape history while a queued op is mid-flight
+        // serialize with the queue so we don't reshape history while a queued op is mid-flight
         // (which could leave queued undo/redo pointing at indices that no longer exist).
         return this.queue(() => {
             let newCursor = 0;
@@ -143,7 +164,6 @@ class EditHistory {
             this.history = newHistory;
             this.cursor = newCursor;
             this.fireEvents();
-            return Promise.resolve();
         });
     }
 }

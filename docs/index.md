@@ -102,7 +102,7 @@ modify the document.
 ### VR Performance
 
 Gaussian splats are expensive to draw, and a headset has to draw the scene twice at high
-resolution. The VR section of the VIEW OPTIONS panel controls the trade-off. Changes to
+resolution. The VR section of the SETTINGS panel controls the trade-off. Changes to
 resolution scale and refresh rate apply the next time you enter VR; the rest apply immediately.
 
 | Setting          | Description                                                                                                                                                                |

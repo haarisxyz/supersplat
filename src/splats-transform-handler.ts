@@ -49,8 +49,8 @@ class SplatsTransformHandler implements TransformHandler {
             }
         });
 
-        events.on('pivot.origin', (mode: 'center' | 'boundCenter') => {
-            if (this.splat) {
+        events.on('splat.localFrame', (splat: Splat) => {
+            if (this.splat === splat) {
                 this.placePivot();
             }
         });
@@ -67,8 +67,7 @@ class SplatsTransformHandler implements TransformHandler {
     }
 
     placePivot() {
-        const origin = this.events.invoke('pivot.origin');
-        this.splat.getPivot(origin === 'center' ? 'center' : 'boundCenter', true, transform);
+        this.splat.getPivot(transform);
         this.events.invoke('pivot').place(transform);
     }
 
@@ -151,7 +150,11 @@ class SplatsTransformHandler implements TransformHandler {
             transformPalette.setTransform(newIdx, mat2);
         });
 
-        this.splat.updateLocalBounds();
+        // route through the shared queue so overlapping drag ticks don't race
+        // on CalcBound's shared render targets / readback buffers. fire-and-
+        // forget is fine: the final bound is recomputed when end() awaits
+        // updatePositions -> updateSorting -> updateLocalBounds.
+        this.events.invoke('queue', () => this.splat.updateLocalBounds());
     }
 
     async end() {
@@ -170,18 +173,18 @@ class SplatsTransformHandler implements TransformHandler {
         const newt = pivot.transform.clone();
         const pop = new PlacePivotOp({ pivot, newt, oldt });
 
-        // record the editop on the EditHistory chain BEFORE awaiting any async work.
-        // events.fire synchronously enqueues the add onto EditHistory's serialized chain, so
-        // any subsequent undo/redo event (e.g. user pressing Ctrl+Z while updatePositions
-        // is still resolving) is guaranteed to land AFTER this op on the chain — which means
-        // the undo will revert this transform operation rather than the prior selection op.
+        // record the editop on the shared command queue BEFORE awaiting any async work.
+        // events.fire synchronously enqueues the add, so any subsequent undo/redo
+        // (e.g. user pressing Ctrl+Z while updatePositions is still resolving) is
+        // guaranteed to land AFTER this op on the queue — which means the undo will
+        // revert this transform operation rather than the prior selection op.
         this.events.fire('edit.add', new MultiOp([top, pop]), true);
 
-        // enqueue the GPU readback onto the same serialized chain so any subsequent
+        // enqueue the GPU readback onto the same shared queue so any subsequent
         // undo/redo waits for it to finish before mutating the sorter's centers buffer.
         // TODO: consider moving this to update() function above so splats are sorted correctly
         // for render during drag (which is slower).
-        await this.events.invoke('edit.queue', () => splat.updatePositions());
+        await this.events.invoke('queue', () => splat.updatePositions());
 
         splat.selectionAlpha = 1;
         splat.scene.outline.enabled = true;

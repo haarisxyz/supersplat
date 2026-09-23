@@ -1,21 +1,22 @@
 import { Container, Label, SelectInput, SliderInput } from '@playcanvas/pcui';
 
-import { localize } from './localization';
+import { i18n } from './localization';
 import { Events } from '../events';
 import { XrSettings } from '../xr';
 
 const row = (labelKey: string, control: Container | SliderInput | SelectInput) => {
-    const container = new Container({ class: 'view-panel-row' });
-    container.append(new Label({
-        text: localize(labelKey),
-        class: 'view-panel-row-label'
-    }));
+    const container = new Container({ class: 'settings-panel-row' });
+    const label = new Label({
+        class: 'settings-panel-row-label'
+    });
+    i18n.bindText(label, labelKey);
+    container.append(label);
     container.append(control as any);
     return container;
 };
 
 /**
- * VR tuning controls, appended to the view options panel.
+ * VR tuning controls, appended to the settings panel.
  *
  * Resolution scale, refresh rate and reference space are baked into the XRSession when it is
  * created, so changing them takes effect the next time VR is entered. Foveation and SH bands
@@ -34,12 +35,12 @@ class XrSettingsGroup extends Container {
         super(args);
 
         const header = new Label({
-            text: localize('panel.view-options.vr'),
-            class: 'view-panel-group-header'
+            class: 'settings-panel-group-header'
         });
+        i18n.bindText(header, 'panel.settings.vr');
 
         const resolutionSlider = new SliderInput({
-            class: 'view-panel-row-slider',
+            class: 'settings-panel-row-slider',
             min: 0.4,
             max: 1.2,
             step: 0.05,
@@ -48,7 +49,7 @@ class XrSettingsGroup extends Container {
         });
 
         const foveationSlider = new SliderInput({
-            class: 'view-panel-row-slider',
+            class: 'settings-panel-row-slider',
             min: 0,
             max: 1,
             step: 0.25,
@@ -57,18 +58,18 @@ class XrSettingsGroup extends Container {
         });
 
         const frameRateSelect = new SelectInput({
-            class: 'view-panel-row-select',
-            defaultValue: '72',
-            options: [
-                { v: '0', t: localize('panel.view-options.vr.refresh-rate.auto') },
-                { v: '72', t: '72 Hz' },
-                { v: '90', t: '90 Hz' },
-                { v: '120', t: '120 Hz' }
-            ]
+            class: 'settings-panel-row-select',
+            defaultValue: '72'
         });
+        i18n.bindOptions(frameRateSelect, () => [
+            { v: '0', t: i18n.t('panel.settings.vr.refresh-rate.auto') },
+            { v: '72', t: '72 Hz' },
+            { v: '90', t: '90 Hz' },
+            { v: '120', t: '120 Hz' }
+        ]);
 
         const shBandsSlider = new SliderInput({
-            class: 'view-panel-row-slider',
+            class: 'settings-panel-row-slider',
             min: 0,
             max: 3,
             precision: 0,
@@ -76,7 +77,7 @@ class XrSettingsGroup extends Container {
         });
 
         const speedSlider = new SliderInput({
-            class: 'view-panel-row-slider',
+            class: 'settings-panel-row-slider',
             min: 0.25,
             max: 8,
             step: 0.25,
@@ -85,23 +86,23 @@ class XrSettingsGroup extends Container {
         });
 
         const snapTurnSelect = new SelectInput({
-            class: 'view-panel-row-select',
-            defaultValue: '30',
-            options: [
-                { v: '0', t: localize('panel.view-options.vr.snap-turn.smooth') },
-                { v: '15', t: '15°' },
-                { v: '30', t: '30°' },
-                { v: '45', t: '45°' }
-            ]
+            class: 'settings-panel-row-select',
+            defaultValue: '30'
         });
+        i18n.bindOptions(snapTurnSelect, () => [
+            { v: '0', t: i18n.t('panel.settings.vr.snap-turn.smooth') },
+            { v: '15', t: '15°' },
+            { v: '30', t: '30°' },
+            { v: '45', t: '45°' }
+        ]);
 
         this.append(header);
-        this.append(row('panel.view-options.vr.resolution-scale', resolutionSlider));
-        this.append(row('panel.view-options.vr.foveation', foveationSlider));
-        this.append(row('panel.view-options.vr.refresh-rate', frameRateSelect));
-        this.append(row('panel.view-options.vr.sh-bands', shBandsSlider));
-        this.append(row('panel.view-options.vr.movement-speed', speedSlider));
-        this.append(row('panel.view-options.vr.snap-turn', snapTurnSelect));
+        this.append(row('panel.settings.vr.resolution-scale', resolutionSlider));
+        this.append(row('panel.settings.vr.foveation', foveationSlider));
+        this.append(row('panel.settings.vr.refresh-rate', frameRateSelect));
+        this.append(row('panel.settings.vr.sh-bands', shBandsSlider));
+        this.append(row('panel.settings.vr.movement-speed', speedSlider));
+        this.append(row('panel.settings.vr.snap-turn', snapTurnSelect));
 
         // guard against the change events we raise ourselves when pushing state into the
         // controls feeding straight back into the settings store
