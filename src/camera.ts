@@ -564,6 +564,12 @@ class Camera extends Element {
     }
 
     onUpdate(deltaTime: number) {
+        // the XR camera drives the view during an immersive session - leave this camera
+        // parked so the editor view is exactly where the user left it on exit
+        if (this.scene.app.xr?.active) {
+            return;
+        }
+
         // controller update
         this.controller.update(deltaTime);
 
@@ -620,6 +626,12 @@ class Camera extends Element {
     }
 
     onPreRender() {
+        // the editor's offscreen targets are not used (and must not be resized to the headset
+        // framebuffer) while an immersive session is running
+        if (this.scene.app.xr?.active) {
+            return;
+        }
+
         this.rebuildRenderTargets();
         this.updateCameraUniforms();
     }

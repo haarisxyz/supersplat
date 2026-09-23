@@ -62,6 +62,22 @@ const downloadFile = (arrayBuffer: ArrayBuffer, filename: string) => {
 const registerRenderEvents = (scene: Scene, events: Events) => {
     let compressor: PngCompressor;
 
+    // The editor camera is parked and its offscreen render targets are deliberately not
+    // maintained while an immersive session is running, so nothing can be rendered offscreen
+    // until the user leaves VR. This is only reachable on a tethered headset, where the
+    // desktop page stays clickable while the user is immersed.
+    const xrBlocked = () => {
+        if (!scene.app.xr?.active) {
+            return false;
+        }
+        events.invoke('showPopup', {
+            type: 'error',
+            header: localize('popup.vr.error'),
+            message: localize('popup.vr.busy')
+        });
+        return true;
+    };
+
     // wait for postrender to fire
     const postRender = () => {
         return new Promise<boolean>((resolve, reject) => {
@@ -77,6 +93,12 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
     };
 
     events.function('render.offscreen', async (width: number, height: number): Promise<Uint8Array> => {
+        // hand back an empty frame rather than a broken one - callers such as the flood
+        // selection tool then simply select nothing
+        if (scene.app.xr?.active) {
+            return new Uint8Array(width * height * 4);
+        }
+
         try {
             // start rendering to offscreen buffer only
             scene.camera.startOffscreenMode(width, height);
@@ -117,6 +139,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
     });
 
     events.function('render.image', async (imageSettings: ImageSettings) => {
+        if (xrBlocked()) {
+            return;
+        }
+
         events.fire('startSpinner');
 
         try {
@@ -183,6 +209,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
     });
 
     events.function('render.video', (videoSettings: VideoSettings, fileStream: FileSystemWritableFileStream) => {
+        if (xrBlocked()) {
+            return false;
+        }
+
         const renderImpl = async () => {
             events.fire('progressStart', localize('panel.render.render-video'), true);
 

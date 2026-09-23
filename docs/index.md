@@ -61,6 +61,67 @@ You can disable rendering of the centers or rings (depending on the active mode)
 
 You can control the pixel size of the center dots in the VIEW OPTIONS panel.
 
+## Viewing in VR
+
+SuperSplat can display the current scene on a WebXR headset such as the Meta Quest 3. When a
+headset is detected, a VR button appears in the vertical toolbar on the right of the 3D view.
+Click it to enter VR, and click it again (or use the headset's own exit gesture) to return to
+the editor.
+
+VR is a viewing mode: the scene is shown exactly as it will look once published, without the
+grid, gizmos, bounding boxes or selection highlights. Any edits you have made, including hidden
+and deleted splats, are reflected immediately. Leaving VR returns you to the editor with the
+desktop camera exactly where you left it.
+
+### Running on a Meta Quest 3
+
+Open SuperSplat in the headset's own browser (Meta Quest Browser). WebXR requires a secure
+context, so the page must be served over `https://` — the hosted editor at
+https://superspl.at/editor already is. If you are testing a local build, use an https tunnel or
+port forwarding rather than plain `http://`, otherwise no headset will be detected.
+
+A tethered PC headset works too: open SuperSplat in a desktop browser that supports WebXR and
+the VR button will appear once the runtime reports a device.
+
+### VR Controls
+
+| Control                        | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| Left thumbstick                | Move around, relative to the direction you are looking        |
+| Right thumbstick left/right    | Turn (snap by default)                                        |
+| Right thumbstick up/down       | Move up and down                                              |
+| Either trigger                 | Hold to move three times faster                               |
+| One grip                       | Grab the scene and drag it around                             |
+| Both grips                     | Grab with both hands to move, turn and scale the scene        |
+| A / X button                   | Re-frame the scene in front of you                            |
+| B / Y button                   | Return to 1:1 scale, so one scene unit is one real metre      |
+
+Moving, turning and scaling change where *you* are, not the scene, so nothing you do in VR can
+modify the document.
+
+### VR Performance
+
+Gaussian splats are expensive to draw, and a headset has to draw the scene twice at high
+resolution. The VR section of the VIEW OPTIONS panel controls the trade-off. Changes to
+resolution scale and refresh rate apply the next time you enter VR; the rest apply immediately.
+
+| Setting          | Description                                                                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resolution Scale | Fraction of the headset's native per-eye resolution to render at. Lower it first if the view judders. Defaults to 0.8 on a Quest 3.                                          |
+| Foveation        | How aggressively to reduce shading towards the edges of the display. Higher is faster, at the cost of some blur in your peripheral vision. Defaults to 0.75 on a Quest 3.    |
+| Refresh Rate     | Target display refresh rate. A lower rate gives each frame more GPU time, which splat scenes usually need more than they need smoothness. Defaults to 72Hz on a Quest 3.     |
+| VR SH Bands      | Spherical harmonic bands evaluated in VR. 0 is fastest and makes splats look flat from every angle; 3 is the full view-dependent lighting. Defaults to 1 on a Quest 3.       |
+| Movement Speed   | Thumbstick locomotion speed, in real metres per second.                                                                                                                     |
+| Snap Turn        | Turn increment for the right thumbstick. Snap turning is much easier on the stomach than smooth turning; choose Smooth only if you are comfortable with it.                  |
+
+The settings are stored in your browser, so they persist between sessions. Defaults are chosen
+from the headset reported by the browser, so a Quest 3 starts out more conservative than a
+tethered PC headset.
+
+If the scene is still too heavy after turning these down, the most effective remaining step is
+to reduce the splat count itself: delete the splats you do not need, or export a compressed
+version of the scene and load that.
+
 ## Selecting and Deleting Splats
 
 Cropping splats or deleting unwanted Gaussians is a key function of SuperSplat. To help with this, there are 3 selection tools available:

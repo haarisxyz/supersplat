@@ -11,6 +11,7 @@ import flyCameraSvg from './svg/fly-camera.svg';
 import orbitCameraSvg from './svg/orbit-camera.svg';
 import ringsSvg from './svg/rings.svg';
 import showHideSplatsSvg from './svg/show-hide-splats.svg';
+import vrSvg from './svg/vr.svg';
 import { Tooltips } from './tooltips';
 
 const createSvg = (svgString: string) => {
@@ -72,6 +73,13 @@ class RightToolbar extends Container {
             icon: 'E283'
         });
 
+        // revealed once the browser reports an immersive-vr device
+        const enterVr = new Button({
+            id: 'right-toolbar-vr',
+            class: 'right-toolbar-toggle',
+            hidden: true
+        });
+
         const centersDom = createSvg(centersSvg);
         const ringsDom = createSvg(ringsSvg);
         ringsDom.style.display = 'none';
@@ -84,6 +92,7 @@ class RightToolbar extends Container {
         cameraFrameSelection.dom.appendChild(createSvg(cameraFrameSelectionSvg));
         cameraReset.dom.appendChild(createSvg(cameraResetSvg));
         colorPanel.dom.appendChild(createSvg(colorPanelSvg));
+        enterVr.dom.appendChild(createSvg(vrSvg));
 
         this.append(ringsModeToggle);
         this.append(showHideSplats);
@@ -94,6 +103,7 @@ class RightToolbar extends Container {
         this.append(cameraFrameSelection);
         this.append(cameraReset);
         this.append(new Element({ class: 'right-toolbar-separator' }));
+        this.append(enterVr);
         this.append(colorPanel);
         this.append(options);
 
@@ -118,6 +128,7 @@ class RightToolbar extends Container {
         tooltips.register(cameraReset, tooltip('tooltip.right-toolbar.reset-camera', 'camera.reset'), 'left');
         tooltips.register(colorPanel, tooltip('tooltip.right-toolbar.colors'), 'left');
         tooltips.register(options, tooltip('tooltip.right-toolbar.view-options'), 'left');
+        tooltips.register(enterVr, tooltip('tooltip.right-toolbar.enter-vr'), 'left');
 
         // add event handlers
 
@@ -154,6 +165,18 @@ class RightToolbar extends Container {
 
         events.on('viewPanel.visible', (visible: boolean) => {
             options.class[visible ? 'add' : 'remove']('active');
+        });
+
+        // the session request must originate from the click handler itself, so fire straight
+        // through rather than awaiting anything first
+        enterVr.on('click', () => events.fire('xr.toggle'));
+
+        events.on('xr.supported', (supported: boolean) => {
+            enterVr.hidden = !supported;
+        });
+
+        events.on('xr.active', (active: boolean) => {
+            enterVr.class[active ? 'add' : 'remove']('active');
         });
     }
 }

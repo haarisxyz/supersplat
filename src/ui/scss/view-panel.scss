@@ -11,7 +11,7 @@
         display: flex;
     }
 
-    & > .view-panel-row {
+    .view-panel-row {
         display: flex;
         flex-direction: row;
         padding: 2px;
@@ -68,5 +68,24 @@
             width: 187px;
             margin: 0;
         }
+    }
+
+    // grouped sub-sections, e.g. VR tuning
+    & > #xr-settings-group {
+        display: flex;
+        flex-direction: column;
+
+        &.pcui-hidden {
+            display: none;
+        }
+    }
+
+    .view-panel-group-header {
+        margin-top: 6px;
+        padding: 4px 2px 2px 2px;
+        color: $text-primary;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-top: 1px solid $bcg-lighter;
     }
 }
