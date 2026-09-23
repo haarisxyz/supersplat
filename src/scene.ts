@@ -352,15 +352,23 @@ class Scene {
     }
 
     private onPreRender() {
-        if (this.canvasResize) {
+        // during an XR session the graphics device resolution is owned by the headset
+        // framebuffer, so leave both the canvas and the editor target size alone. Sizing the
+        // editor's offscreen targets to the headset framebuffer would allocate tens of
+        // megabytes of HDR buffers that are never drawn.
+        const xrActive = !!this.app.xr?.active;
+
+        if (this.canvasResize && !xrActive) {
             this.canvas.width = this.canvasResize.width;
             this.canvas.height = this.canvasResize.height;
             this.canvasResize = null;
         }
 
-        // update render target size
-        this.targetSize.width = Math.ceil(this.app.graphicsDevice.width / this.config.camera.pixelScale);
-        this.targetSize.height = Math.ceil(this.app.graphicsDevice.height / this.config.camera.pixelScale);
+        if (!xrActive) {
+            // update render target size
+            this.targetSize.width = Math.ceil(this.app.graphicsDevice.width / this.config.camera.pixelScale);
+            this.targetSize.height = Math.ceil(this.app.graphicsDevice.height / this.config.camera.pixelScale);
+        }
 
         this.forEachElement(e => e.onPreRender());
 

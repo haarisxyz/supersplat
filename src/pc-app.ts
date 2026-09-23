@@ -55,8 +55,8 @@ import {
     // TemplateHandler,
     // TextHandler,
     // TextureAtlasHandler,
-    TextureHandler
-    // XrManager
+    TextureHandler,
+    XrManager
 } from 'playcanvas';
 
 class PCApp extends AppBase {
@@ -82,7 +82,8 @@ class PCApp extends AppBase {
         // appOptions.soundManager = new SoundManager(options);
         // appOptions.lightmapper = Lightmapper;
         // appOptions.batchManager = BatchManager;
-        // appOptions.xr = XrManager;
+        // WebXR support - required for immersive VR mode
+        appOptions.xr = XrManager;
 
         this.init(appOptions);
     }

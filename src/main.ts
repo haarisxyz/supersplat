@@ -33,6 +33,7 @@ import { registerTrackManagerEvents } from './track-manager';
 import { registerTransformHandlerEvents } from './transform-handler';
 import { EditorUI } from './ui/editor';
 import { localizeInit } from './ui/localization';
+import { registerXrEvents } from './xr';
 
 declare global {
     interface LaunchParams {
@@ -115,7 +116,9 @@ const main = async () => {
         antialias: false,
         depth: false,
         stencil: false,
-        xrCompatible: false,
+        // request an XR compatible context up front. XRWebGLLayer cannot be created from an
+        // incompatible context, and calling makeXRCompatible() later can cost a context loss
+        xrCompatible: !!navigator.xr,
         powerPreference: 'high-performance'
     });
 
@@ -244,6 +247,7 @@ const main = async () => {
     registerSelectionEvents(events, scene);
     registerDocEvents(scene, events);
     registerRenderEvents(scene, events);
+    registerXrEvents(scene, events);
     initFileHandler(scene, events, editorUI.appContainer.dom);
 
     // load async models

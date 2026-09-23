@@ -5,6 +5,7 @@ import { Events } from '../events';
 import { ShortcutManager } from '../shortcut-manager';
 import { localize } from './localization';
 import { Tooltips } from './tooltips';
+import { XrSettingsGroup } from './xr-settings-group';
 
 class ViewPanel extends Container {
     constructor(events: Events, tooltips: Tooltips, args = {}) {
@@ -321,6 +322,9 @@ class ViewPanel extends Container {
         showCameraPosesRow.append(showCameraPosesLabel);
         showCameraPosesRow.append(showCameraPosesToggle);
 
+        // VR tuning, self-hiding until an immersive-vr device is reported
+        const xrSettingsGroup = new XrSettingsGroup(events);
+
         this.append(header);
         this.append(clrRow);
         this.append(tonemappingRow);
@@ -333,6 +337,7 @@ class ViewPanel extends Container {
         this.append(showGridRow);
         this.append(showBoundRow);
         this.append(showCameraPosesRow);
+        this.append(xrSettingsGroup);
 
         // handle panel visibility
 
